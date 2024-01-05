@@ -1,3 +1,5 @@
 casatools
 numpy
 snakemake
+datasets
+Pillow

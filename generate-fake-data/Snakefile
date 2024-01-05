@@ -1,6 +1,7 @@
 rule all:
     input:
-        "data/ms.ms"
+        "data/ms.ms",
+        "data/mock_data.npz"
 
 rule download_ms:
     output: temp("data/IMLup_continuum.ms.tgz")
@@ -21,3 +22,18 @@ rule export_baselines:
     input: "data/ms.ms"
     output: npz="data/baselines_and_weights.npz", plot="data/baseline_plot.png"
     shell: "python export_baselines.py {input} {output.npz} {output.plot} --select_fraction 0.05"
+
+# saved using float32
+rule export_img:
+    output: img="data/img.npy", plot="data/img_plot.png"
+    shell: "python create_butterfly.py {output.img} {output.plot}"
+
+# now package these together into a single .npz 
+rule package:
+    input:
+        baselines="data/baselines_and_weights.npz",
+        img="data/img.npy"
+    output:
+        "data/mock_data.npz"
+    shell:
+        "python package_data.py {input.baselines} {input.img} {output}"

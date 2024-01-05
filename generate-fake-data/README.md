@@ -1,19 +1,11 @@
 # Generate Fake Data
 
-This example generates fake visibility data from a mock image.
+This example generates fake visibility data from a mock image and a set of example baselines. It uses the IM Lup DSHARP dataset for realistic baseline and weight values and source flux. This particular fake dataset is used as a test fixture within the MPoL test suite.
 
-* start with the butterfly image, downsample / resize as with PIL. Export raw image, but also compact commands for processing as data factory in tests.
-
-Expects that you will run commands from this directory.
-
-- [ ] script to download image and convert to nufft-ready format
-- [ ] script to combine npy baselines and numpy image into single .npz archive.
-
-Specify the frequency as 1.3mm, no need to get it from dataset.
-
-Yes, we took 5% of all baselines *after* channel averaging, and the datasize is 2.3 Mb w/ float64 and 1.2mb with float32. So that's acceptable and we're done now.
-
-Assumes that from this directory, you will run
+* `create_butterfly.py` downloads a nice looking image from the `ceyda/smithsonian_butterflies` collection, uses PIL to greyscale and crop it, adjusts the flux value to match DSHARP IM Lup, then saves it as a numpy array.
+* `export_baselines.py` uses MPoL-dev/visread and casatools to extract real baselines from the IM Lup measurement set, and saves them as a numpy array. To save space, we take <5% of the visibilities.
+* `package_data.py` combines the two numpy arrays into a single archive, saved as `float32` to save space.
+* `Snakefile` is a snakemake file setting up the workflow. From this directory, you can run 
 
 ```
 $ snakemake -c 1 all
