@@ -5,6 +5,11 @@ import visread.process
 from mpol import coordinates, fourier, utils
 from pathlib import Path
 
+from numpy import typing as npt
+from typing import Any
+
+from dataclasses import dataclass
+
 # assumes you're running this from sgd/, not sgd/src/
 _npz_path = Path("data/mock_data.npz")
 
@@ -29,12 +34,23 @@ uu_lam, vv_lam = visread.process.broadcast_and_convert_baselines(
 )
 
 # stored as 1D, broadcast to (nchan, nvis)
-weight = np.broadcast_to(np.float64(archive["weight"]), uu_lam.shape)
+w = np.float64(archive["weight"])
+
+# because we took only a fraction of the data, the original weight produces very 
+# noisey visibilities.
+# We will reduce sigma by a factor s
+s = 10.0
+# which increases weight by a factor s^2
+w *= s**2
+weight = np.broadcast_to(w, uu_lam.shape)
 
 # set up image and fourier coordinates
 coords = coordinates.GridCoords(cell_size=_cell_size, npix=npix)
 
-# fake data routine expects tensors
+# set random seed to make dataset repeatable
+torch.manual_seed(42)
+
+# fake data routine expects tensors and returns a tensor
 data, _ = fourier.generate_fake_data(
     packed_cube,
     coords,
@@ -43,15 +59,18 @@ data, _ = fourier.generate_fake_data(
     torch.from_numpy(weight.copy()),
 )
 
-# package everything up as a dataclass for easy use in other routines
+# package everything up for easy use in other routines using dataclasses
+@dataclass
+class VisData:
+    uu: torch.Tensor
+    vv: torch.Tensor
+    weight: torch.Tensor
+    data: torch.Tensor
 
 
-# @pytest.fixture(scope="session")
-# def mock_dataset_np(baselines_2D_np, weight_2D_t, mock_data_t):
-#     uu, vv = baselines_2D_np
-#     weight = utils.torch2npy(weight_2D_t)
-#     data = utils.torch2npy(mock_data_t)
-#     data_re = np.real(data)
-#     data_im = np.imag(data)
-
-#     return (uu, vv, weight, data_re, data_im)
+vis_data = VisData(
+    torch.from_numpy(uu_lam),
+    torch.from_numpy(vv_lam),
+    torch.from_numpy(weight.copy()),
+    data,
+)

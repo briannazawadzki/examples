@@ -1,21 +1,18 @@
-import mpol
 from mpol import coordinates, gridding
-import numpy as np
 import matplotlib.pyplot as plt
-from src import loaddata
+import load_data
 import argparse
 
-def init_dirty_imager(filename):
-    uu, vv, data, weight = loaddata.get_basic_data(filename)
-
-    coords = coordinates.GridCoords(cell_size=0.005, npix=800)
-    return gridding.DirtyImager(
+def init_dirty_imager():
+    vis_data = load_data.vis_data
+    
+    coords = coordinates.GridCoords(cell_size=0.005, npix=1028)
+    return gridding.DirtyImager.from_tensors(
         coords=coords,
-        uu=uu,
-        vv=vv,
-        weight=weight,
-        data_re=np.real(data),
-        data_im=np.imag(data),
+        uu=vis_data.uu,
+        vv=vis_data.vv,
+        weight=vis_data.weight,
+        data=vis_data.data,
     )
 
 def main():
@@ -23,14 +20,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Make a dirty image with the visibilities."
     )
-    parser.add_argument("file", help="Path to asdf file")
-    parser.add_argument("outfile", help="Output file") 
+    parser.add_argument("outfile", help="Output image") 
     args = parser.parse_args()
     
-    imager = init_dirty_imager(args.file)
+    imager = init_dirty_imager()
 
     img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0)
-
 
     # set plot dimensions
     xx = 8 # in

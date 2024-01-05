@@ -8,4 +8,9 @@ rule seed_mock_data:
 rule baselines:
     input: "data/mock_data.npz"
     output: "analysis/baselines.png"
-    shell: "python src/plot_baselines.py {input} {output}"
+    shell: "python src/plot_baselines.py {output}"
+
+rule dirty_image:
+    input: "data/mock_data.npz"
+    output: "analysis/dirty_image.png"
+    shell: "python src/dirty_image.py {output}"
