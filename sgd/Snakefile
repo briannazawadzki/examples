@@ -1,0 +1,11 @@
+
+
+
+rule seed_mock_data:
+    output: "data/mock_data.npz"
+    shell: "cp ../generate-fake-data/data/mock_data.npz {output}"
+
+rule baselines:
+    input: "data/mock_data.npz"
+    output: "analysis/baselines.png"
+    shell: "python src/plot_baselines.py {input} {output}"
