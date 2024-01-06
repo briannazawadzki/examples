@@ -1,102 +1,53 @@
 import numpy as np
 import loaddata
+import dirty_image
 import torch
 import argparse
 import matplotlib.colors as mco
 import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader, Sampler
 from mpol import coordinates, gridding, fourier, images, losses, utils, plot
-import visread
-import visread.visualization
 
 from torch.utils.tensorboard import SummaryWriter
 
-# following structure from https://github.com/pytorch/examples/blob/main/mnist/main.py
 
-# create our new loss function
-def log_likelihood_avg_loss(model_vis, data_vis, weight):
-    N = len(torch.ravel(data_vis))
-    log_likelihood = losses.log_likelihood(model_vis, data_vis, weight)
-    # factor of 2 from complex-valued data
-    return log_likelihood/(2 * N)
-
-
-# create a model that uses the NuFFT to predict
+# create the forward model
 class Net(torch.nn.Module):
     def __init__(
         self,
         coords=None,
         nchan=1,
-        base_cube=None,
     ):
         super().__init__()
-
-        # these should be saved as registered variables, so they are serialized on save
         self.coords = coords
         self.nchan = nchan
 
-        self.bcube = images.BaseCube(
-            coords=self.coords, nchan=self.nchan, base_cube=base_cube
-        )
-
+        self.bcube = images.BaseCube(coords=self.coords, nchan=self.nchan)
         self.conv_layer = images.HannConvCube(nchan=self.nchan)
-
-        self.icube = images.ImageCube(
-            coords=self.coords, nchan=self.nchan, passthrough=True
-        )
+        self.icube = images.ImageCube(coords=self.coords, nchan=self.nchan)
         self.nufft = fourier.NuFFT(coords=self.coords, nchan=self.nchan)
 
     def forward(self, uu, vv):
         r"""
-        Predict visibilities at uu, vv.
+        Predict model visibilities at baseline locations.
 
-        Feed forward to calculate the model visibilities. In this step, a :class:`~mpol.images.BaseCube` is fed to a :class:`~mpol.images.HannConvCube` is fed to a :class:`~mpol.images.ImageCube` is fed to a :class:`~mpol.fourier.NuFFT` to produce the model visibilities.
+        Parameters
+        ----------
+        uu, vv : torch.Tensor
+            spatial frequencies. Units of :math:`\lambda`.
 
-        Returns: 1D complex torch tensor of model visibilities.
+        Returns
+        -------
+        torch.Tensor
+            1D complex torch tensor of model visibilities.
         """
+        # Feed-forward network passes base representation through "layers"
+        # to create model visibilities
         x = self.bcube()
         x = self.conv_layer(x)
         x = self.icube(x)
         vis = self.nufft(x, uu, vv)
         return vis
-
-
-class DdidBatchSampler(Sampler):
-    """
-    Custom Sampler to gather mini-batches having the same ddid (usually corresponds to a unique spw for a unique obs id).
-    """
-    def __init__(self, ddids, batch_size, shuffle=True):
-        self.ddids = ddids
-        self.ids = np.arange(len(ddids))
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        
-        self.unique_ddids = np.unique(self.ddids)
-
-        # calculate how many batches we will have for each ddid sub-group
-        self.batches_per_ddid = {}
-        for ddid in self.unique_ddids:
-            # find all indices with ddid match
-            ids_ddid = self.ids[(self.ddids == ddid)]
-            # calculate the length
-            nbatches = (len(ids_ddid) + self.batch_size - 1) // self.batch_size
-            self.batches_per_ddid[ddid] = nbatches
-
-    def __len__(self):
-        "returns the number of batches to cover all the data"
-        return np.sum([b for b in self.batches_per_ddid.values()])
-
-    def __iter__(self):
-        if self.shuffle:
-            rng = np.random.default_rng()
-            rng.shuffle(self.unique_ddids)
-
-        for ddid in self.unique_ddids:
-            # find all indices with ddid match
-            ids_ddid = self.ids[(self.ddids == ddid)]
-
-            for batch in torch.chunk(torch.tensor(ids_ddid), self.batches_per_ddid[ddid]):
-                yield batch.tolist()
 
 
 def plots(model, step, writer):
@@ -113,7 +64,7 @@ def plots(model, step, writer):
     ax.set_ylim(-r, r)
     writer.add_figure("image", fig, step)
 
-    norm_asinh = plot.get_image_cmap_norm(img, stretch='asinh')
+    norm_asinh = plot.get_image_cmap_norm(img, stretch="asinh")
     fig, ax = plt.subplots(nrows=1)
     plot.plot_image(img, extent=model.coords.img_ext, norm=norm_asinh, ax=ax)
     # set zoom a little
@@ -121,113 +72,39 @@ def plots(model, step, writer):
     ax.set_ylim(-r, r)
     writer.add_figure("asinh", fig, step)
 
-    bcube = np.squeeze(utils.torch2npy(utils.packed_cube_to_sky_cube(model.bcube.base_cube)))
+    bcube = np.squeeze(
+        utils.torch2npy(utils.packed_cube_to_sky_cube(model.bcube.base_cube))
+    )
     norm = mco.Normalize(vmin=np.min(bcube), vmax=np.max(bcube))
     fig, ax = plt.subplots(nrows=1)
     plot.plot_image(bcube, extent=model.coords.img_ext, ax=ax, norm=norm)
     writer.add_figure("bcube", fig, step)
 
     # get gradient as it exists on model from root node
-    b_grad = np.squeeze(utils.torch2npy(utils.packed_cube_to_sky_cube(model.bcube.base_cube.grad)))
+    b_grad = np.squeeze(
+        utils.torch2npy(utils.packed_cube_to_sky_cube(model.bcube.base_cube.grad))
+    )
     norm_sym = plot.get_image_cmap_norm(b_grad, symmetric=True)
     fig, ax = plt.subplots(nrows=1)
-    plot.plot_image(b_grad, extent=model.coords.img_ext, norm=norm_sym, ax=ax, cmap="bwr_r")
+    plot.plot_image(
+        b_grad, extent=model.coords.img_ext, norm=norm_sym, ax=ax, cmap="bwr_r"
+    )
     writer.add_figure("b_grad", fig, step)
 
-
-# plot fourier cube (amplitudes and phases)
-def plot_fourier_cube():
-    pass
-
-
-def plot_baselines(step, writer):
-    pass
 
 def residual_dirty_image(coords, model_vis, uu, vv, data, weight, step, writer):
     # calculate residual dirty image for this *batch*
     resid = data - model_vis
+    imager = gridding.DirtyImager.from_tensors(
+        coords=coords, uu=uu, vv=vv, weight=weight, data=resid
+    )
+    img, beam = imager.get_dirty_image(
+        weighting="briggs", robust=0.0, check_visibility_scatter=False
+    )
 
-    # convert all quantities to numpy arrays 
-    uu = utils.torch2npy(uu)
-    vv = utils.torch2npy(vv)
-    resid = np.squeeze(utils.torch2npy(resid))
-    weight = utils.torch2npy(weight)
-    # print(uu.shape, vv.shape, resid.shape, weight.shape)
-    imager = gridding.DirtyImager(coords=coords, uu=uu, vv=vv, weight=weight, data_re=np.real(resid), data_im=np.imag(resid))
-    img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0, check_visibility_scatter=False)
-
-    # plot the two
-    # set plot dimensions
-    xx = 8 # in
-    cax_width = 0.2 # in 
-    cax_sep = 0.1 # in
-    mmargin = 1.2
-    lmargin = 0.7
-    rmargin = 0.9
-    tmargin = 0.3
-    bmargin = 0.5
-
-    npanels = 2
-    # the size of image axes + cax_sep + cax_width
-    block_width = (xx - lmargin - rmargin - mmargin * (npanels - 1) )/npanels
-    ax_width = block_width - cax_width - cax_sep
-    ax_height = ax_width 
-    yy = bmargin + ax_height + tmargin
-    
-    kw = {"origin": "lower", "interpolation": "none", "extent": imager.coords.img_ext, "cmap":"inferno"}
-
-    fig = plt.figure(figsize=(xx, yy))
-    ax = []
-    cax = []
-    for i in range(npanels):
-        ax.append(fig.add_axes([(lmargin + i * (block_width + mmargin))/xx, bmargin/yy, ax_width/xx, ax_height/yy]))
-        cax.append(fig.add_axes([(lmargin + i * (block_width + mmargin) + ax_width + cax_sep)/xx, bmargin/yy, cax_width/xx, ax_height/yy]))
-
-    # single-channel image cube    
-    chan = 0
-
-    im_beam = ax[0].imshow(beam[chan], **kw)
-    cbar = plt.colorbar(im_beam, cax=cax[0])
-    ax[0].set_title("beam")
-    # zoom in a bit on the beam
-    r = 0.4
-    ax[0].set_xlim(r, -r)
-    ax[0].set_ylim(-r, r)
-
-    im = ax[1].imshow(img[chan], **kw)
-    ax[1].set_title("dirty image")
-    cbar = plt.colorbar(im, cax=cax[1])
-    cbar.set_label(r"Jy/beam")
-
-    for a in ax:
-        a.set_xlabel(r"$\Delta \alpha \cos \delta$ [${}^{\prime\prime}$]")
-        a.set_ylabel(r"$\Delta \delta$ [${}^{\prime\prime}$]")
-
+    fig = dirty_image.plot_beam_and_image(beam, img)
     writer.add_figure("dirty_image", fig, step)
 
-# plot histogram of residuals normalized to weight
-def plot_residual_histogram(model_vis, data, weight, ddid, step, writer):
-    # convert all quantities to numpy arrays 
-    model_vis = utils.torch2npy(torch.squeeze(model_vis))
-    data = utils.torch2npy(torch.squeeze(data))
-    weight = utils.torch2npy(torch.squeeze(weight))
-
-    ddid = utils.torch2npy(ddid)
-    unique_ddid = np.unique(ddid)
-
-    # compute normalized scatter 
-    scatter = visread.scatter.get_averaged_scatter(data, model_vis, weight)
-    fig = visread.visualization.plot_averaged_scatter(scatter)
-    fig.suptitle(unique_ddid)
-
-    writer.add_figure("residual_scatter", fig, step)
-
-# model will need to move to one that includes a key to index the amplitude and/or weight rescaling
-# or at least a dictionary that can look up obsid from ddid
-
-# plot the baseline distribution of the batch samples (potentially more relevant with inter-EB switching)
-
-# can train on just long baselines, just short baselines, etc, and see what happens to the model and residuals.
 
 def train(args, model, device, train_loader, optimizer, epoch, writer):
     model.train()
@@ -238,7 +115,7 @@ def train(args, model, device, train_loader, optimizer, epoch, writer):
             vv.to(device),
             data.to(device),
             weight.to(device),
-            ddid.to(device)
+            ddid.to(device),
         )
 
         optimizer.zero_grad()
@@ -246,7 +123,7 @@ def train(args, model, device, train_loader, optimizer, epoch, writer):
         vis = model(uu, vv)
 
         # calculate loss
-        loss = losses.nll(vis, data, weight)
+        loss = losses.neg_log_likelihood_avg(vis, data, weight)
         loss.backward()
         optimizer.step()
 
@@ -283,7 +160,7 @@ def validate(model, device, validate_loader):
                 vv.to(device),
                 data.to(device),
                 weight.to(device),
-                ddid.to(device)
+                ddid.to(device),
             )
 
             # get model visibilities
@@ -359,7 +236,9 @@ def main():
         "--tensorboard-log-dir",
         help="The log dir to which tensorboard files should be written.",
     )
-    parser.add_argument("--load-checkpoint", help="Path to checkpoint from which to resume.")
+    parser.add_argument(
+        "--load-checkpoint", help="Path to checkpoint from which to resume."
+    )
     parser.add_argument(
         "--save-checkpoint",
         help="Path to which checkpoint where finished model and optimizer state should be saved.",
@@ -410,7 +289,7 @@ def main():
             torch.tensor(vv[indices]),
             torch.tensor(data[indices]),
             torch.tensor(weight[indices]),
-            torch.tensor(ddid[indices])
+            torch.tensor(ddid[indices]),
         )
 
     train_dataset = init_dataset(train_indices)
@@ -420,20 +299,33 @@ def main():
     if use_cuda:
         cuda_kwargs = {"num_workers": 1, "pin_memory": True}
     else:
-        cuda_kwargs = {}    
-    
+        cuda_kwargs = {}
+
     if args.sampler == "default":
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, **cuda_kwargs)
-        validation_loader = DataLoader(validation_dataset, batch_size=args.validation_batch_size, shuffle=True, **cuda_kwargs)
+        train_loader = DataLoader(
+            train_dataset, batch_size=args.batch_size, shuffle=True, **cuda_kwargs
+        )
+        validation_loader = DataLoader(
+            validation_dataset,
+            batch_size=args.validation_batch_size,
+            shuffle=True,
+            **cuda_kwargs
+        )
 
     elif args.sampler == "ddid":
         train_ddids = ddid[train_indices]
         train_sampler = DdidBatchSampler(train_ddids, args.batch_size)
-        train_loader = DataLoader(train_dataset, batch_sampler=train_sampler, **cuda_kwargs)
+        train_loader = DataLoader(
+            train_dataset, batch_sampler=train_sampler, **cuda_kwargs
+        )
 
         validation_ddids = ddid[validation_indices]
-        validation_sampler = DdidBatchSampler(validation_ddids, args.validation_batch_size)
-        validation_loader = DataLoader(validation_dataset, batch_sampler=validation_sampler, **cuda_kwargs)
+        validation_sampler = DdidBatchSampler(
+            validation_ddids, args.validation_batch_size
+        )
+        validation_loader = DataLoader(
+            validation_dataset, batch_sampler=validation_sampler, **cuda_kwargs
+        )
 
     # create the model and send to device
     coords = coordinates.GridCoords(cell_size=0.005, npix=1028)
@@ -466,8 +358,6 @@ def main():
             },
             args.save_checkpoint,
         )
-
-    # TODO: see what the variation in number of baselines / dirty image is for each batch... is it informative?
 
     writer.close()
 

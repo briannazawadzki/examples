@@ -1,16 +1,14 @@
-
-
-
-rule seed_mock_data:
-    output: "data/mock_data.npz"
-    shell: "cp ../generate-fake-data/data/mock_data.npz {output}"
+rule all:
+    input: 
+        "analysis/baselines.png",
+        "analysis/dirty_image.png"        
 
 rule baselines:
-    input: "data/mock_data.npz"
+    input: "data/mock_data.npz", "src/plot_baselines.py"
     output: "analysis/baselines.png"
     shell: "python src/plot_baselines.py {output}"
 
 rule dirty_image:
-    input: "data/mock_data.npz"
+    input: "data/mock_data.npz", "src/dirty_image.py"
     output: "analysis/dirty_image.png"
     shell: "python src/dirty_image.py {output}"

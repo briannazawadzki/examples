@@ -15,25 +15,14 @@ def init_dirty_imager():
         data=vis_data.data,
     )
 
-def main():
-
-    parser = argparse.ArgumentParser(
-        description="Make a dirty image with the visibilities."
-    )
-    parser.add_argument("outfile", help="Output image") 
-    args = parser.parse_args()
-    
-    imager = init_dirty_imager()
-
-    img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0)
-
+def plot_beam_and_image(beam, img):
     # set plot dimensions
     xx = 8 # in
     cax_width = 0.2 # in 
     cax_sep = 0.1 # in
     mmargin = 1.2
     lmargin = 0.7
-    rmargin = 0.9
+    rmargin = 0.8
     tmargin = 0.3
     bmargin = 0.5
 
@@ -67,12 +56,27 @@ def main():
     im = ax[1].imshow(img[chan], **kw)
     ax[1].set_title("dirty image")
     cbar = plt.colorbar(im, cax=cax[1])
-    cbar.set_label(r"Jy/beam")
+    cbar.set_label(r"Jy/arcsec$^2$")
 
     for a in ax:
         a.set_xlabel(r"$\Delta \alpha \cos \delta$ [${}^{\prime\prime}$]")
         a.set_ylabel(r"$\Delta \delta$ [${}^{\prime\prime}$]")
 
+    return fig
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description="Make a dirty image with the visibilities."
+    )
+    parser.add_argument("outfile", help="Output image") 
+    args = parser.parse_args()
+    
+    imager = init_dirty_imager()
+
+    img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0, unit="Jy/arcsec^2")
+    fig = plot_beam_and_image(beam, img)
     fig.savefig(args.outfile, dpi=300)
 
 

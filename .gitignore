@@ -164,4 +164,3 @@ cython_debug/
 large-tutorials/runs
 generate-fake-data/data
 sgd/analysis
-sgd/data

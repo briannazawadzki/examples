@@ -22,12 +22,13 @@ def main():
     uu = np.concatenate([uu, -uu])
     vv = np.concatenate([vv, -vv])
 
-    fig, ax = plt.subplots(nrows=1, figsize=(6,6))
-    ax.scatter(uu, vv, s=1.5, rasterized=True, linewidths=0.0, c="k")
-    ax.set_xlabel(r"$u$ [$\lambda$]")
-    ax.set_ylabel(r"$v$ [$\lambda$]")
+    fig, ax = plt.subplots(nrows=1, figsize=(4.5,4.3))
+    ax.scatter(uu *1e-6, vv*1e-6, s=1.5, rasterized=True, linewidths=0.0, c="k")
+    ax.set_xlabel(r"$u$ [M$\lambda$]")
+    ax.set_ylabel(r"$v$ [M$\lambda$]")
     ax.axis('equal')
-    fig.subplots_adjust(left=0.15, right=0.85)
+    fig.subplots_adjust(left=0.18, right=0.82, bottom=0.12, top=0.92)
+    ax.set_title("Baseline distribution")
     fig.savefig(args.outfile, dpi=300)
 
 if __name__=="__main__":
