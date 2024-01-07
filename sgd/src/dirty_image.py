@@ -15,7 +15,7 @@ def init_dirty_imager():
         data=vis_data.data,
     )
 
-def plot_beam_and_image(beam, img):
+def plot_beam_and_image(beam, img, extent):
     # set plot dimensions
     xx = 8 # in
     cax_width = 0.2 # in 
@@ -33,7 +33,7 @@ def plot_beam_and_image(beam, img):
     ax_height = ax_width 
     yy = bmargin + ax_height + tmargin
     
-    kw = {"origin": "lower", "interpolation": "none", "extent": imager.coords.img_ext, "cmap":"inferno"}
+    kw = {"origin": "lower", "interpolation": "none", "extent": extent, "cmap":"inferno"}
 
     fig = plt.figure(figsize=(xx, yy))
     ax = []
@@ -76,8 +76,8 @@ def main():
     imager = init_dirty_imager()
 
     img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0, unit="Jy/arcsec^2")
-    fig = plot_beam_and_image(beam, img)
-    fig.savefig(args.outfile, dpi=300)
+    fig = plot_beam_and_image(beam, img, imager.coords.img_ext)
+    fig.savefig(args.outfile, dpi=120)
 
 
 if __name__=="__main__":

@@ -12,3 +12,25 @@ rule dirty_image:
     input: "data/mock_data.npz", "src/dirty_image.py"
     output: "analysis/dirty_image.png"
     shell: "python src/dirty_image.py {output}"
+
+
+# python src/sgd.py --tensorboard-log-dir=runs/exp0 --save-checkpoint=checkpoints/0.pt 
+# python src/sgd.py --tensorboard-log-dir=runs/exp1 --load-checkpoint=checkpoints/0.pt --save-checkpoint=checkpoints/1.pt
+# python src/sgd.py --tensorboard-log-dir=runs/exp2 --load-checkpoint=checkpoints/1.pt --save-checkpoint=checkpoints/2.pt --epochs=50
+# python src/sgd.py --tensorboard-log-dir=runs/exp3 --load-checkpoint=checkpoints/2.pt --save-checkpoint=checkpoints/3.pt --epochs=50 --lr 1e4
+
+# python src/sgd.py --tensorboard-log-dir=runs/exp5 --save-checkpoint=checkpoints/5.py --epochs=50
+# python src/sgd.py --tensorboard-log-dir=runs/exp6 --save-checkpoint=checkpoints/6.py --epochs=10 --batch-size=1000
+
+# python src/sgd.py --tensorboard-log-dir=runs/ent0 --epochs=15 --batch-size=5000 --lam-ent=1e-5 --epochs=50 --save-checkpoint=checkpoints/ent0.pt
+# low of 7.8e-5 validation loss 
+# python src/sgd.py --tensorboard-log-dir=runs/ent1 --epochs=15 --batch-size=5000 --lam-ent=1e-5 --epochs=50 --save-checkpoint=checkpoints/ent1.pt --load-checkpoint=checkpoints/ent0.pt
+
+# python src/sgd.py --tensorboard-log-dir=runs/ent2 --epochs=15 --batch-size=10000 --lam-ent=1e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent0.pt 
+# python src/sgd.py --tensorboard-log-dir=runs/ent3 --epochs=15 --batch-size=10000 --lam-ent=1e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent1.pt --load-checkpoint=checkpoints/ent0.pt
+
+# python src/sgd.py --tensorboard-log-dir=runs/ent4 --epochs=15 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent0.pt
+# python src/sgd.py --tensorboard-log-dir=runs/ent5 --epochs=50 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent1.pt --load-checkpoint=checkpoints/ent0.pt
+# python src/sgd.py --tensorboard-log-dir=runs/ent6 --epochs=80 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent2.pt --load-checkpoint=checkpoints/ent1.pt
+# python src/sgd.py --tensorboard-log-dir=runs/ent7 --epochs=100 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent3.pt --load-checkpoint=checkpoints/ent2.pt
+# python src/sgd.py --tensorboard-log-dir=runs/ent8 --epochs=100 --batch-size=10000 --lam-ent=5e-6 --log-interval=2 --save-checkpoint=checkpoints/ent5.pt --load-checkpoint=checkpoints/ent4.pt

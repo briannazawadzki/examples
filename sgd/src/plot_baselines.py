@@ -29,7 +29,7 @@ def main():
     ax.axis('equal')
     fig.subplots_adjust(left=0.18, right=0.82, bottom=0.12, top=0.92)
     ax.set_title("Baseline distribution")
-    fig.savefig(args.outfile, dpi=300)
+    fig.savefig(args.outfile, dpi=120)
 
 if __name__=="__main__":
     main()

@@ -67,10 +67,10 @@ class VisData:
     weight: torch.Tensor
     data: torch.Tensor
 
-
+# store everything as 1D
 vis_data = VisData(
-    torch.from_numpy(uu_lam),
-    torch.from_numpy(vv_lam),
-    torch.from_numpy(weight.copy()),
-    data,
+    torch.squeeze(torch.from_numpy(uu_lam)),
+    torch.squeeze(torch.from_numpy(vv_lam)),
+    torch.squeeze(torch.from_numpy(weight.copy())),
+    torch.squeeze(data),
 )
