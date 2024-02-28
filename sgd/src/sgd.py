@@ -26,7 +26,7 @@ class Net(torch.nn.Module):
         self.nchan = nchan
 
         self.bcube = images.BaseCube(coords=self.coords, nchan=self.nchan)
-        self.conv_layer = images.HannConvCube(nchan=self.nchan)
+        # self.conv_layer = images.HannConvCube(nchan=self.nchan)
         self.icube = images.ImageCube(coords=self.coords, nchan=self.nchan)
         self.nufft = fourier.NuFFT(coords=self.coords, nchan=self.nchan)
 
@@ -47,7 +47,7 @@ class Net(torch.nn.Module):
         # Feed-forward network passes base representation through "layers"
         # to create model visibilities
         x = self.bcube()
-        x = self.conv_layer(x)
+        # x = self.conv_layer(x)
         x = self.icube(x)
         vis = self.nufft(x, uu, vv)
         return vis
@@ -173,7 +173,7 @@ def main():
     parser.add_argument(
         "--lr",
         type=float,
-        default=1e4,
+        default=1e-3,
         help="learning rate",
     )
     parser.add_argument(
@@ -238,7 +238,7 @@ def main():
     model = Net(coords).to(device)
 
     # create optimizer
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
     if args.load_checkpoint is not None:
         checkpoint = torch.load(args.load_checkpoint)
@@ -251,6 +251,7 @@ def main():
     for epoch in range(0, args.epochs):
         train(args, model, device, train_loader, optimizer, epoch, args.lam_ent, writer)
         vloss = validate(model, device)
+        print("validation loss", vloss.item())
         writer.add_scalar("vloss", vloss, epoch)
         optimizer.step()
 

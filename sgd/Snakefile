@@ -34,3 +34,17 @@ rule dirty_image:
 # python src/sgd.py --tensorboard-log-dir=runs/ent6 --epochs=80 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent2.pt --load-checkpoint=checkpoints/ent1.pt
 # python src/sgd.py --tensorboard-log-dir=runs/ent7 --epochs=100 --batch-size=10000 --lam-ent=5e-6 --epochs=20 --log-interval=2 --save-checkpoint=checkpoints/ent3.pt --load-checkpoint=checkpoints/ent2.pt
 # python src/sgd.py --tensorboard-log-dir=runs/ent8 --epochs=100 --batch-size=10000 --lam-ent=5e-6 --log-interval=2 --save-checkpoint=checkpoints/ent5.pt --load-checkpoint=checkpoints/ent4.pt
+
+
+
+# trying with adamw
+# no regularization
+# python src/sgd.py --tensorboard-log-dir=runs/nolam0 --epochs=10 --log-interval=1 --save-checkpoint=checkpoints/nolam0.pt --lr 5e-2
+# min validation: 9.0e-5, but not perfectly captured
+
+# maximum entropy
+# lam = 1e-5
+# python src/sgd.py --tensorboard-log-dir=runs/lam1e-5_0 --epochs=50 --log-interval=1 --save-checkpoint=checkpoints/lam1e-5_0.pt --lr 5e-2 --lam-ent=1e-5
+# python src/sgd.py --tensorboard-log-dir=runs/lam1e-5_1 --epochs=50 --log-interval=1 --save-checkpoint=checkpoints/lam1e-5_1.pt --load-checkpoint=checkpoints/lam1e-5_0.pt --lr 1e-1 --lam-ent=1e-5
+# min validation: 7.33e-5, though significant variation to 8.2e-5, suggesting that image is
+# changing significantly as LR might be too high, perhaps?
