@@ -213,6 +213,7 @@ def main():
     else:
         device = torch.device("cpu")
 
+
     # load the dataset
     vis_data = load_data.vis_data
 
