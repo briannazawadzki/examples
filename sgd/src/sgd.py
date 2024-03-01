@@ -148,9 +148,17 @@ def train(args, model, device, train_loader, optimizer, epoch, lam_ent, writer):
 def validate(model, device):
     model.eval()
     ref_cube = load_data.sky_cube.to(device)
+    ref_cube_packed = utils.sky_cube_to_packed_cube(ref_cube)
+
+    FWHMs = [0.05, 0.1, 0.15] # arcsec
     # speed up calculation by disabling gradients
     with torch.no_grad():
-        validate_loss = mle(model.icube.sky_cube, ref_cube)
+        # convolve packed cubes to common resolution
+        
+        FWHM = 0.2 #arcsec
+        ref_cube_convolved = images.convolve_packed_cube(ref_cube_packed, model.coords, FWHM, FWHM)
+        model_cube_convolved = images.convolve_packed_cube(model.icube.packed_cube)
+        validate_loss = mle(model_cube_convolved, ref_cube_convolved)
 
     return validate_loss
 
@@ -251,9 +259,8 @@ def main():
     # enter the loop
     for epoch in range(0, args.epochs):
         train(args, model, device, train_loader, optimizer, epoch, args.lam_ent, writer)
-        vloss = validate(model, device)
-        print("validation loss", vloss.item())
-        writer.add_scalar("vloss", vloss, epoch)
+        vloss_dict = validate(model, device)
+        writer.add_scalars("vloss", vloss_dict, epoch)
         optimizer.step()
 
     # save checkpoint

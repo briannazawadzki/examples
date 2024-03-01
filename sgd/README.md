@@ -7,18 +7,18 @@ This example folder collects several scripts that comprise a typical workflow. A
 * RML imaging: `src/sgd.py`
 
 # Usage 
-You can produce the final image using Snakemake by
+You can produce a final image using Snakemake by
 ```
 snakemake -c1 all
 ```
 
-To experiment, we recommend an iterative workflow, save progress, and visualize your results as you explore the dataset, use commands like
+To experiment, we recommend an iterative workflow where you save progress and visualize your results as you explore the dataset. For example, use commands like
 
 ```
 python src/sgd.py --tensorboard-log-dir=runs/exp0 --save-checkpoint=checkpoints/0.pt 
 ```
 
-More options with `python src/sgd.py --help`. View training progress with Tensorboard.
+and then view training progress with Tensorboard.
 
 # Strategy
 
@@ -33,7 +33,7 @@ This approach cannot be used with real datasets, obviously, but in this case aff
 
 ### Varying resolution
 
-It might be unrealistic for RML to recover the native resolution of the image if the dataset lacks many long baselines, so we can also calculate the validation score at resolutions coarser than the source image. To do this, we convolve both $I_\mathrm{true}$ and $I_\mathrm{syn}$ with a 2D Gaussian described by FWHMs of $\theta_a, \theta_b$  before computing $L_\mathrm{validation}$. 
+If the dataset lacks many long baselines, it is unrealistic for RML to recover the native resolution of the image. In this case, we can calculate the validation score at resolutions coarser than the source image. We do this by convolving both $I_\mathrm{true}$ and $I_\mathrm{syn}$ with a 2D Gaussian described by FWHMs of $\theta_a, \theta_b$  before computing $L_\mathrm{validation}$. 
 
 ## (lack of) Regularization
 To demonstrate why regularization is needed for imaging workflows, try running without any:
@@ -55,11 +55,6 @@ You can spot this behavior by monitoring the training loss and the validation lo
 * try ent 5e-6: looking good, min val 5.96e-5 and still declining, many continued iterations. some residual flux remains. Continues to look good!
 
 # Next steps
-* Implement Gaussian convolution as multiplication in Fourier plane
-    * assert coords and npix match up
-    * take routine from dirty_imager taper
-    * add functionality to ImageCube if reasonable
-    * test w/ MPoL tests
 * calculate the validation score at several different resolutions, and monitor each of those as a tensorboard scalar
 * Could also put taper as learnable parameter in feedforward (instead of Hann)
 * read text on optimizers - should we be tuning AdamW somehow?
