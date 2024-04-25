@@ -38,5 +38,15 @@ Things we record:
 * validation loss at several final resolutions.
 
 
+FWHM = 0.05, no entropy regularization
+Raw is 4.8e-5
+0.02 is 3.2e-5
+0.06 is 1.16e-5
+0.1 is 4.8e-6
+over train and runaway fits
+
+FWHM = 0.05, lam = 1e-4 entropy
+
+
 Visualization
 * compare known visibility amplitude to measured, as a function of radial baseline

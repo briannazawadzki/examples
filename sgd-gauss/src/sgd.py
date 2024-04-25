@@ -26,7 +26,7 @@ class Net(torch.nn.Module):
         self.nchan = nchan
 
         self.bcube = images.BaseCube(coords=self.coords, nchan=self.nchan)
-        self.conv_layer = images.GaussBaseBeam(coords=self.coords, FWHM=FWHM)
+        self.conv_layer = images.GaussConvFourier(coords=self.coords, FWHM_maj=FWHM, FWHM_min=FWHM)
         self.icube = images.ImageCube(coords=self.coords, nchan=self.nchan)
         self.nufft = fourier.NuFFT(coords=self.coords, nchan=self.nchan)
 
@@ -52,6 +52,20 @@ class Net(torch.nn.Module):
         vis = self.nufft(x, uu, vv)
         return vis
 
+# pre-calculate the quantities needed to plot the power spectrum
+# get max baseline
+q_data = torch.hypot(load_data.vis_data.uu, load_data.vis_data.vv)
+q_max = torch.max(q_data)
+
+# use pre-defined variables in load_data
+flayer = fourier.FourierCube(load_data.coords)
+# pass through layer to set internal state
+flayer(load_data.packed_cube)
+
+# get the amp vs. qs for the true image
+true_amp = utils.torch2npy(flayer.ground_amp.flatten())
+qs = load_data.coords.ground_q_centers_2D.flatten()
+
 
 def plots(model, step, writer):
     """
@@ -62,6 +76,18 @@ def plots(model, step, writer):
     fig, ax = plt.subplots(nrows=1)
     plot.plot_image(img, extent=model.coords.img_ext, ax=ax)
     writer.add_figure("image", fig, step)
+
+    # compare power spectra
+    fig, ax = plt.subplots(nrows=1)
+    ax.axvline(q_max * 1e-6, lw=0.5, zorder=-1)
+    ax.scatter(qs *1e-6, true_amp, s=0.4, rasterized=True, linewidths=0.0, c="k", alpha=0.2, label="true")
+    flayer(model.icube.packed_cube)
+    model_amp = utils.torch2npy(flayer.ground_amp.flatten())
+    ax.scatter(qs *1e-6, model_amp, s=0.4, rasterized=True, linewidths=0.0, c="C0", alpha=0.2, label="model")
+    ax.set_xlabel(r"$q$ [M$\lambda$]")
+    ax.set_ylabel(r"$|V|$ [Jy]")
+    ax.set_yscale("log")
+    writer.add_figure("spectrum", fig, step)
 
     bcube = np.squeeze(
         utils.torch2npy(utils.packed_cube_to_sky_cube(model.bcube.base_cube))
@@ -156,7 +182,7 @@ def validate(model, device):
     with torch.no_grad():
         # convolve packed cubes to common resolution
         for FWHM in FWHMs:
-            layer = images.GaussConvCube(model.coords, nchan=1, FWHM_maj=FWHM, FWHM_min=FWHM).to(device)
+            layer = images.GaussConvFourier(model.coords, FWHM_maj=FWHM, FWHM_min=FWHM).to(device)
             ref_cube_convolved = layer(ref_cube)
             model_cube_convolved = layer(model.icube.sky_cube)
             loss_dict["FWHM: {:.2f}".format(FWHM)] = mle(model_cube_convolved, ref_cube_convolved)
