@@ -166,3 +166,7 @@ generate-fake-data/data
 sgd/analysis
 sgd/checkpoints
 sgd/runs
+sgd-gauss/analysis
+sgd-gauss/checkpoints
+sgd-gauss/data
+sgd-gauss/runs
