@@ -1,8 +1,8 @@
-# SGD Gauss
+# Stochastic Gradient Descent with Mock Data
 
-This is an introductory workflow to explain how MPoL works, using simulated data.
+This is a complete example demonstrating how MPoL works using simulated data.
 
-It has a Gaussian convolution layer at the base.
+The main file is [sgd.py](src/sgd.py). Some aspects of the workflow are automated with Snakemake ([`Snakefile`](Snakefile)).
 
 # Validation 
 Since we are using mock data, we have the advantage of knowing the true sky. This allows us to calculate a 'validation loss' between the synthesized image and the true sky.
@@ -30,23 +30,28 @@ You can spot this behavior by monitoring the training loss and the validation lo
 
 # Maximum Entropy Regularization
 
-Things we can vary:
-* fixed FWHM setting of `GaussBaseBeam`
-* amount of max ent regularization
+One can obtain a decent image using Maximum Entropy Regularization. Here are a few examples that you can run, saving checkpoints and resuming from finished models. We recommend that you examine the output using Tensorboard after each run, and make adjustments accordingly.
 
-Things we record:
-* validation loss at several final resolutions.
+Initial run with no entropy:
+
+```shell
+python src/sgd.py --tensorboard-log-dir=runs/exp0 --save-checkpoint=checkpoints/0.pt --lr 1e-2 --FWHM 0.05 --epochs=50
+```
+
+Resuming from previous model, and speeding up learning rate
+```shell
+python src/sgd.py --tensorboard-log-dir=runs/exp1 --load-checkpoint=checkpoints/0.pt --save-checkpoint=checkpoints/1.pt --lr 1e-1 --FWHM 0.05 --epochs=30
+```
+
+Hastening learning rate yet further,
+```shell
+python src/sgd.py --tensorboard-log-dir=runs/exp2 --load-checkpoint=checkpoints/1.pt --save-checkpoint=checkpoints/2.pt --lr 4e-1 --FWHM 0.05 --epochs=50
+```
+
+Adding entropy regularization, and reducing learning rate slightly.
+```shell
+python src/sgd.py --tensorboard-log-dir=runs/ent0 --load-checkpoint=checkpoints/2.pt --save-checkpoint=checkpoints/ent0.pt --lr 1e-1 --FWHM 0.05 --epochs=50 --lam-ent=1e-5
+```
 
 
-FWHM = 0.05, no entropy regularization
-Raw is 4.8e-5
-0.02 is 3.2e-5
-0.06 is 1.16e-5
-0.1 is 4.8e-6
-over train and runaway fits
-
-FWHM = 0.05, lam = 1e-4 entropy
-
-
-Visualization
-* compare known visibility amplitude to measured, as a function of radial baseline
+Note that we could have started directly with the entropy regularization if we wished. The previous just demonstrates an exploratory workflow.
