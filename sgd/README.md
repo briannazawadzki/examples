@@ -2,7 +2,8 @@
 
 This is a complete example demonstrating how MPoL works using simulated data.
 
-The main file is [sgd.py](src/sgd.py). Some aspects of the workflow are automated with Snakemake ([`Snakefile`](Snakefile)).
+* See [`load_data.py`](src/load_data.py) on how to generate mock data from the mock image and baselines produced in the `generate-fake-data` example.
+* The main file is [`sgd.py`](src/sgd.py). Some aspects of the workflow are automated with Snakemake ([`Snakefile`](Snakefile)).
 
 # Validation 
 Since we are using mock data, we have the advantage of knowing the true sky. This allows us to calculate a 'validation loss' between the synthesized image and the true sky.
