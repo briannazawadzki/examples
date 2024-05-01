@@ -1,4 +1,4 @@
-# Generate Fake Image and Baselines
+# Setup Mock Image and Baselines
 
 This example generates a mock sky brightness image and a realistic set of baselines $(u,v)$, which are later used by other examples in this repository, and as a fixture within the MPoL test suite. It uses the IM Lup DSHARP dataset for realistic baselines, weight values, and source flux. 
 
