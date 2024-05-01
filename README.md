@@ -5,7 +5,7 @@ This repository hosts self-contained examples demonstrating [MPoL](https://mpol-
 This repository is *not* continuously integrated with the rest of the codebase, because the computational demands are too significant. If you do encounter an error, please log it as a [GitHub issue](https://github.com/MPoL-dev/examples/issues).
 
 ## Getting started
-* [Setup Mock Image and Baselines](generate-fake-data/README.md) | Generate a mock sky image $I_\nu(l,m)$ and interferometer baselines $(u,v)$ (but not visibilities $\mathcal{V}(u,v)$). These products are used as input for the other examples.
+* [Setup Mock Image and Baselines](generate-mock-baselines/README.md) | Generate a mock sky image $I_\nu(l,m)$ and interferometer baselines $(u,v)$ (but not visibilities $\mathcal{V}(u,v)$). These products are used as input for the other examples.
 * [Stochastic Gradient Descent](sgd/README.md) | We recommend starting here for a complete example using MPoL to work with mock data.
 
 ## Advanced
