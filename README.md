@@ -9,6 +9,7 @@ This repository is *not* continuously integrated with the rest of the codebase, 
 * [Visibility Inference with Pyro](AS209-pyro-inference/README.md) | Use MPoL with Pyro to sample parametric visibility plane models.
 
 Stubs in progress
+* [Diagnostic Imaging](diagnostic/gridder.md)
 * [Optimization with Gridded Data](gridded/optimization.md)
 * [Initialize to Dirty Image](dirty-image-initialization/initializedirtyimage.md)
 * [Cross validation](crossvalidate/crossvalidation.md)
