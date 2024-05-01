@@ -13,3 +13,6 @@ Note that this script does not sample mock visibility values $\mathcal{V}(u,v)$.
 ```
 $ snakemake -c 1 all
 ```
+
+Will create this mock image (sourced from `ceyda/smithsonian_butterflies`) stuffed into `data/mock_data.npz`
+![Mock Image](img_plot.png)

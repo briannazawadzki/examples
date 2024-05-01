@@ -162,7 +162,7 @@ cython_debug/
 .snakemake
 
 large-tutorials/runs
-generate-fake-data/data
+generate-mock-baselines/data
 sgd/analysis
 sgd/checkpoints
 sgd/runs
