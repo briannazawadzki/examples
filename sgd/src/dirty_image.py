@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import load_data
 import argparse
 
+
 def init_dirty_imager():
     vis_data = load_data.vis_data
-    
+
+    # create a DirtyImager instance with the mock visibility data
     coords = coordinates.GridCoords(cell_size=0.005, npix=1028)
     return gridding.DirtyImager.from_tensors(
         coords=coords,
@@ -15,11 +17,12 @@ def init_dirty_imager():
         data=vis_data.data,
     )
 
+
 def plot_beam_and_image(beam, img, extent):
     # set plot dimensions
-    xx = 8 # in
-    cax_width = 0.2 # in 
-    cax_sep = 0.1 # in
+    xx = 8  # in
+    cax_width = 0.2  # in
+    cax_sep = 0.1  # in
     mmargin = 1.2
     lmargin = 0.7
     rmargin = 0.8
@@ -28,21 +31,44 @@ def plot_beam_and_image(beam, img, extent):
 
     npanels = 2
     # the size of image axes + cax_sep + cax_width
-    block_width = (xx - lmargin - rmargin - mmargin * (npanels - 1) )/npanels
+    block_width = (xx - lmargin - rmargin - mmargin * (npanels - 1)) / npanels
     ax_width = block_width - cax_width - cax_sep
-    ax_height = ax_width 
+    ax_height = ax_width
     yy = bmargin + ax_height + tmargin
-    
-    kw = {"origin": "lower", "interpolation": "none", "extent": extent, "cmap":"inferno"}
+
+    kw = {
+        "origin": "lower",
+        "interpolation": "none",
+        "extent": extent,
+        "cmap": "inferno",
+    }
 
     fig = plt.figure(figsize=(xx, yy))
     ax = []
     cax = []
     for i in range(npanels):
-        ax.append(fig.add_axes([(lmargin + i * (block_width + mmargin))/xx, bmargin/yy, ax_width/xx, ax_height/yy]))
-        cax.append(fig.add_axes([(lmargin + i * (block_width + mmargin) + ax_width + cax_sep)/xx, bmargin/yy, cax_width/xx, ax_height/yy]))
+        ax.append(
+            fig.add_axes(
+                [
+                    (lmargin + i * (block_width + mmargin)) / xx,
+                    bmargin / yy,
+                    ax_width / xx,
+                    ax_height / yy,
+                ]
+            )
+        )
+        cax.append(
+            fig.add_axes(
+                [
+                    (lmargin + i * (block_width + mmargin) + ax_width + cax_sep) / xx,
+                    bmargin / yy,
+                    cax_width / xx,
+                    ax_height / yy,
+                ]
+            )
+        )
 
-    # single-channel image cube    
+    # single-channel image cube
     chan = 0
 
     im_beam = ax[0].imshow(beam[chan], **kw)
@@ -66,19 +92,22 @@ def plot_beam_and_image(beam, img, extent):
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         description="Make a dirty image with the visibilities."
     )
-    parser.add_argument("outfile", help="Output image") 
+    parser.add_argument("outfile", help="Output image")
     args = parser.parse_args()
-    
+
     imager = init_dirty_imager()
 
-    img, beam = imager.get_dirty_image(weighting="briggs", robust=0.0, unit="Jy/arcsec^2")
+    # call the DirtyImager to calculate the
+    # dirty image and dirty beam
+    img, beam = imager.get_dirty_image(
+        weighting="briggs", robust=0.0, unit="Jy/arcsec^2"
+    )
     fig = plot_beam_and_image(beam, img, imager.coords.img_ext)
     fig.savefig(args.outfile, dpi=120)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

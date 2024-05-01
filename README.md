@@ -6,7 +6,7 @@ This repository is *not* continuously integrated with the rest of the codebase, 
 
 ## Getting started
 * [Setup Mock Image and Baselines](generate-mock-baselines/README.md) | Generate a mock sky image $I_\nu(l,m)$ and interferometer baselines $(u,v)$ (but not visibilities $\mathcal{V}(u,v)$). These products are used as input for the other examples.
-* [Stochastic Gradient Descent](sgd/README.md) | We recommend starting here for a complete example using MPoL to work with mock data.
+* [Stochastic Gradient Descent](sgd/README.md) | A complete end-to-end example using MPoL to image mock data.
 
 ## Advanced
 * [Visibility Inference with Pyro](AS209-pyro-inference/README.md) | Use MPoL with Pyro to sample parametric visibility plane models.
