@@ -1,0 +1,36 @@
+rule all:
+    input:
+        "data/raw/imlup.asdf",
+        "data/raw/dsharp.fits"
+
+# copy the exported data from CASA into this directory
+rule seed_data:
+    output: data="data/raw/imlup.asdf", fits="data/raw/dsharp.fits"
+    shell: 
+        "cp ../casa_analysis/data/export/imlup.asdf {output.data} && "
+        "cp ../casa_analysis/data/temp/initial/dsharp.fits {output.fits}"
+
+rule baselines:
+    input: "data/raw/imlup.asdf"
+    output: "analysis/baselines.png"
+    shell: "python src/plot_baselines.py {input} {output}"
+
+# make a dirty image and compare to CLEAN
+rule dirty_img:
+    input: "data/raw/imlup.asdf"
+    output: "analysis/dirty_image.png"
+    shell: "python src/dirty_image.py {input} {output}"
+
+
+# the runs for the paper
+# python src/sgd.py data/raw/imlup.asdf --tensorboard-log-dir analysis/runs/final/exp0 --save-checkpoint analysis/checkpoints/final/chk0.pt --lr 1e-2 --FWHM 0.03 --lam-ent 1e-9 --epochs 10
+# python src/sgd.py data/raw/imlup.asdf --tensorboard-log-dir analysis/runs/final/exp1 --load-checkpoint analysis/checkpoints/final/chk0.pt --save-checkpoint analysis/checkpoints/final/chk1.pt --lr 1e-2 --FWHM 0.03 --lam-ent 1e-9 --epochs 10
+
+
+#### Compare best MPoL image to the CLEAN 
+# python src/compare_CLEAN_mpol.py analysis/checkpoints/shift/chk4.pt data/raw/dsharp.fits analysis/clean_v_mpol_0.03.png analysis/mpol_0.03.fits
+# python src/compare_CLEAN_mpol.py analysis/checkpoints/final/chk0.pt data/raw/dsharp.fits analysis/clean_v_mpol_0.03_all.png
+# python src/compare_CLEAN_mpol.py analysis/checkpoints/final/chk1.pt data/raw/dsharp.fits analysis/clean_v_mpol_0.03_final.png
+# python src/compare_CLEAN_mpol.py analysis/checkpoints/final/chk1.pt data/raw/dsharp.fits analysis/clean_v_mpol_0.03.png --fitsfile analysis/mpol_0.03.fits
+
+# python src/analyze_scale_factors.py analysis/checkpoints/final/chk1.pt
